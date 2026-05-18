@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact - Station Météo API</title>
+    
+    <!-- Importation d'une police moderne (Poppins) -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        /* --- Fond de page (On garde ton fond animé) --- */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Le dégradé animé */
+            background: linear-gradient(-45deg, #89cff0, #4facfe, #00f2fe, #0288d1);
+            background-size: 400% 400%;
+            animation: gradientSky 15s ease infinite;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientSky {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Carte du Formulaire (Mise à jour pour lisibilité) --- */
+        .contact-card {
+            /* FOND BLANC SOLIDE pour une lisibilité parfaite */
+            background: #ffffff; 
+            border-radius: 24px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            /* Ombre plus douce mais marquée pour détacher la carte du fond */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            transition: transform 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        /* Petit effet au survol de la carte */
+        .contact-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* --- En-tête (Textes sombres sur fond blanc) --- */
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .weather-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            /* Un léger effet néon bleu sur l'icône */
+            text-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+        }
+
+        .header h1 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+            /* Couleur bleu météo sombre */
+            color: #01579b; 
+        }
+
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 1rem;
+            font-weight: 300;
+            /* Gris sombre */
+            color: #546e7a; 
+        }
+
+        /* --- Champs du formulaire (Mise à jour contrastes) --- */
+        .form-group {
+            margin-bottom: 22px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            /* Gris très sombre */
+            color: #263238; 
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 16px;
+            /* Gris très clair pour le fond du champ */
+            background: #f1f5f9; 
+            /* Bordure fine gris clair */
+            border: 1px solid #e2e8f0; 
+            border-radius: 12px;
+            /* Texte noir/sombre pour la frappe */
+            color: #1e293b; 
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        /* Couleur du texte d'exemple (Placeholder) */
+        input::placeholder, textarea::placeholder {
+            color: #94a3b8;
+        }
+
+        /* Style quand on clique/sélectionne un champ */
+        input:focus, textarea:focus {
+            background: #ffffff;
+            /* Bordure bleue Météo */
+            border-color: #4facfe; 
+            box-shadow: 0 0 0 4px rgba(79, 172, 254, 0.15);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 130px;
+        }
+
+        /* --- Bouton d'envoi (Inversion des couleurs) --- */
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            /* Fond bleu Météo */
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            /* Texte Blanc */
+            color: #ffffff; 
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.3);
+        }
+
+        .submit-btn:hover {
+            /* Légère rotation de dégradé au survol */
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="contact-card">
+        <div class="header">
+            <div class="weather-icon">🌤️ 🌧️</div>
+            <h1>Contact</h1>
+            <p>Observatoire Météorologique & API</p>
+        </div>
+
+        <!-- Formulaire statique (pas d'action définie pour cet exercice) -->
+        <form onsubmit="event.preventDefault(); const btn = document.querySelector('.submit-btn'); btn.innerText = 'Message envoyé ✔️'; btn.style.background = 'linear-gradient(45deg, #10b981, #059669)'; btn.style.boxShadow = '0 6px 20px rgba(16, 185, 129, 0.4)'; btn.disabled = true;">
+            <div class="form-group">
+                <label for="prenom">Prénom</label>
+                <input type="text" id="prenom" name="prenom" placeholder="Ex: Jean" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="nom">Nom</label>
+                <input type="text" id="nom" name="nom" placeholder="Ex: Dupont" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="message">Message</label>
+                <textarea id="message" name="message" placeholder="Votre question sur nos prévisions..." required></textarea>
+            </div>
+            
+            <button type="submit" class="submit-btn">Envoyer</button>
+        </form>
+    </div>
+
+</body>
+</html>
