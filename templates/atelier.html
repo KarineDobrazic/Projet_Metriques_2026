@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Métrologie</title>
+    
+    <!-- Importation de Google Charts -->
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(-45deg, #89cff0, #4facfe, #00f2fe, #0288d1);
+            background-size: 400% 400%;
+            animation: gradientSky 15s ease infinite;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        @keyframes gradientSky {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .dashboard-container {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+            box-sizing: border-box;
+            transition: transform 0.3s ease;
+        }
+
+        .dashboard-container:hover {
+            transform: translateY(-5px);
+        }
+
+        h1 {
+            color: #01579b;
+            margin: 0 0 5px 0;
+            font-weight: 600;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+        }
+
+        p.subtitle {
+            color: #546e7a;
+            margin-top: 5px;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            font-weight: 400;
+            line-height: 1.5;
+        }
+
+        /* Format spécifique pour la date de mise à jour */
+        .timestamp {
+            display: block;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        #gauge_chart {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            min-height: 200px;
+            overflow-x: hidden;
+        }
+
+        /* --- Style du Spinner de chargement --- */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #0288d1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #status {
+            margin-top: 30px;
+            font-size: 0.95rem;
+            color: #0288d1; /* Bleu neutre pendant le chargement */
+            font-weight: 600;
+            padding: 10px 20px;
+            background: #e0f2fe;
+            border-radius: 12px;
+            display: inline-block;
+            box-shadow: 0 4px 6px rgba(2, 136, 209, 0.1);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <h1>Supervision Temps Réel</h1>
+        <!-- On ajoute un ID au sous-titre pour pouvoir le modifier en Javascript -->
+        <p class="subtitle" id="info-lieu">
+            📍 Conditions à Viry-Châtillon
+            <span class="timestamp" id="info-date">Calcul de l'heure en cours...</span>
+        </p>
+        
+        <div id="gauge_chart"></div>
+        
+        <!-- Le texte de statut intègre maintenant la div "spinner" -->
+        <div id="status">
+            <span id="spinner-icon" class="spinner"></span>
+            <span id="status-text">Récupération de la télémétrie...</span>
+        </div>
+    </div>
+
+    <script>
+        google.charts.load('current', {'packages':['gauge']});
+        google.charts.setOnLoadCallback(fetchAndDraw);
+
+        async function fetchAndDraw() {
+            try {
+                // Début du fetch vers l'API
+                const res = await fetch('/api/atelier');
+                if (!res.ok) throw new Error(`Erreur HTTP: ${res.status}`);
+                
+                const jsonData = await res.json();
+                
+                // --- Gestion de la Date et de l'Heure ---
+                const maintenant = new Date();
+                const optionsDate = { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+                // Formatage en français (ex: "Mardi 18 mai à 15:30")
+                const dateFormatee = maintenant.toLocaleDateString('fr-FR', optionsDate);
+                // Mise à jour du HTML
+                document.getElementById('info-date').innerText = "Mise à jour : " + dateFormatee.charAt(0).toUpperCase() + dateFormatee.slice(1);
+
+                // --- Création du graphique ---
+                var data = google.visualization.arrayToDataTable(jsonData);
+
+                var options = {
+                    width: 600, 
+                    height: 200,
+                    redFrom: 90, redTo: 100,
+                    yellowFrom: 75, yellowTo: 90,
+                    minorTicks: 5,
+                    animation: {
+                        startup: true,
+                        duration: 1200,
+                        easing: 'inAndOut'
+                    }
+                };
+
+                var chart = new google.visualization.Gauge(document.getElementById('gauge_chart'));
+                chart.draw(data, options);
+
+                // --- Mise à jour visuelle du succès ---
+                document.getElementById('spinner-icon').style.display = 'none'; // On cache le spinner
+                document.getElementById('status-text').innerText = "Télémétrie synchronisée avec succès ✔️";
+                
+                const statusDiv = document.getElementById('status');
+                statusDiv.style.color = "#059669";
+                statusDiv.style.background = "#d1fae5";
+                statusDiv.style.boxShadow = "0 4px 6px rgba(16, 185, 129, 0.1)";
+
+            } catch (err) {
+                // --- Mise à jour visuelle de l'erreur ---
+                document.getElementById('spinner-icon').style.display = 'none';
+                document.getElementById('status-text').innerText = "Erreur de synchronisation ❌";
+                
+                const statusDiv = document.getElementById('status');
+                statusDiv.style.color = "#dc2626";
+                statusDiv.style.background = "#fee2e2";
+                console.error(err);
+            }
+        }
+    </script>
+</body>
+</html>
