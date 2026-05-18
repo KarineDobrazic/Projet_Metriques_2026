@@ -32,6 +32,10 @@ def api_paris():
 @app.route("/rapport")
 def mongraphique():
     return render_template("graphique.html")
+
+@app.route("/histogramme")
+def monhistogramme():
+    return render_template("histogramme.html")
 # Ne rien mettre après ce commentaire
     
 if __name__ == "__main__":
