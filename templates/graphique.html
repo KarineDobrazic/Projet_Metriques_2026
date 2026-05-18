@@ -1,9 +1,105 @@
-<html>
-  <head>
-    <meta charset="UTF-8" />
-    <title>Graphique</title>
- </head>  
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Températures Paris — Google LineChart</title>
+
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+    #chart { width: 100%; height: 520px; }
+    #status { margin-top: 12px; white-space: pre-wrap; }
+  </style>
+</head>
+
 <body>
-    <h2>Mon Graphique</h2>
+  <h1>Températures horaires — Paris</h1>
+  <div id="chart"></div>
+  <div id="status"></div>
+
+  <script>
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(init);
+
+    let cachedRows = null;
+
+    async function init() {
+      try {
+        const rows = await fetchParisData();
+        cachedRows = rows;
+        drawChart(rows);
+
+        window.addEventListener('resize', () => {
+          if (cachedRows) drawChart(cachedRows);
+        });
+      } catch (err) {
+        showStatus("Erreur: " + (err?.message || err));
+        console.error(err);
+      }
+    }
+
+    async function fetchParisData() {
+      const res = await fetch('/paris', { headers: { 'Accept': 'application/json' } });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} sur /paris`);
+      }
+
+      const json = await res.json();
+
+      // json attendu: [{ datetime: "2026-02-15T00:00", temperature_c: 0.5 }, ...]
+      // Convertir en rows: [Date, Number]
+      const rows = json.map(p => {
+        const dt = toDate(p.datetime);
+        const temp = Number(p.temperature_c);
+        return [dt, temp];
+      });
+
+      // Optionnel: trier par date au cas où
+      rows.sort((a, b) => a[0] - b[0]);
+
+      return rows;
+    }
+
+    function toDate(isoLike) {
+      // "2026-02-15T00:00"
+      // On parse en Date locale. Si tu veux forcer UTC, dis-moi.
+      const [datePart, timePart] = isoLike.split('T');
+      const [y, m, d] = datePart.split('-').map(Number);
+      const [hh, mm] = timePart.split(':').map(Number);
+      return new Date(y, m - 1, d, hh, mm, 0);
+    }
+
+    function drawChart(rows) {
+      const data = new google.visualization.DataTable();
+      data.addColumn('datetime', 'Date/Heure');
+      data.addColumn('number', 'Température (°C)');
+      data.addRows(rows);
+
+      const options = {
+        title: 'Température à Paris (horaire)',
+        legend: { position: 'bottom' },
+        hAxis: {
+          title: 'Date/Heure',
+          format: 'dd/MM HH:mm'
+        },
+        vAxis: {
+          title: '°C'
+        },
+        explorer: { actions: ['dragToZoom', 'rightClickToReset'] }
+      };
+
+      const chart = new google.visualization.LineChart(document.getElementById('chart'));
+      chart.draw(data, options);
+
+      showStatus(`OK — ${rows.length} points chargés depuis /paris`);
+    }
+
+    function showStatus(msg) {
+      document.getElementById('status').textContent = msg;
+    }
+  </script>
 </body>
 </html>
