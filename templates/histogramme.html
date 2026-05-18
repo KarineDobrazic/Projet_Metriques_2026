@@ -2,60 +2,99 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
-  <title>Histogramme météo Paris</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Températures Paris — Google ColumnChart</title>
 
   <script src="https://www.gstatic.com/charts/loader.js"></script>
 
   <style>
-    body {
-      font-family: Arial;
-      margin: 20px;
-    }
-    #chart {
-      width: 100%;
-      height: 500px;
-    }
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+    #chart { width: 100%; height: 520px; }
+    #status { margin-top: 12px; white-space: pre-wrap; }
   </style>
 </head>
 
 <body>
-  <h2>Températures Paris - Histogramme</h2>
-
+  <h1>Températures horaires — Paris (Histogramme)</h1>
   <div id="chart"></div>
+  <div id="status"></div>
 
   <script>
     google.charts.load('current', { packages: ['corechart'] });
-    google.charts.setOnLoadCallback(loadData);
+    google.charts.setOnLoadCallback(init);
 
-    async function loadData() {
-      const res = await fetch('/paris');
-      const data = await res.json();
+    let cachedRows = null;
 
-      const rows = data.map(p => [p.datetime, Number(p.temperature_c)]);
+    async function init() {
+      try {
+        const rows = await fetchParisData();
+        cachedRows = rows;
+        drawChart(rows);
 
-      drawChart(rows);
+        window.addEventListener('resize', () => {
+          if (cachedRows) drawChart(cachedRows);
+        });
+      } catch (err) {
+        showStatus("Erreur: " + (err?.message || err));
+        console.error(err);
+      }
+    }
+
+    async function fetchParisData() {
+      const res = await fetch('/paris', { headers: { 'Accept': 'application/json' } });
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status} sur /paris`);
+      }
+
+      const json = await res.json();
+
+      const rows = json.map(p => {
+        const dt = toDate(p.datetime);
+        const temp = Number(p.temperature_c);
+        return [dt, temp];
+      });
+
+      rows.sort((a, b) => a[0] - b[0]);
+
+      return rows;
+    }
+
+    function toDate(isoLike) {
+      const [datePart, timePart] = isoLike.split('T');
+      const [y, m, d] = datePart.split('-').map(Number);
+      const [hh, mm] = timePart.split(':').map(Number);
+      return new Date(y, m - 1, d, hh, mm, 0);
     }
 
     function drawChart(rows) {
       const data = new google.visualization.DataTable();
-      data.addColumn('string', 'Date');
-      data.addColumn('number', 'Température');
-
+      data.addColumn('datetime', 'Date/Heure');
+      data.addColumn('number', 'Température (°C)');
       data.addRows(rows);
 
       const options = {
-        title: 'Températures sur 7 jours',
-        legend: { position: 'none' },
-        hAxis: { title: 'Date' },
-        vAxis: { title: '°C' },
-        bar: { groupWidth: '70%' }
+        title: 'Température à Paris (horaire)',
+        legend: { position: 'bottom' },
+        hAxis: {
+          title: 'Date/Heure',
+          format: 'dd/MM HH:mm'
+        },
+        vAxis: {
+          title: '°C'
+        },
+        explorer: { actions: ['dragToZoom', 'rightClickToReset'] }
       };
 
-      const chart = new google.visualization.ColumnChart(
-        document.getElementById('chart')
-      );
-
+      // Appel de la classe ColumnChart au lieu de LineChart
+      const chart = new google.visualization.ColumnChart(document.getElementById('chart'));
       chart.draw(data, options);
+
+      showStatus(`OK — ${rows.length} points chargés depuis /paris`);
+    }
+
+    function showStatus(msg) {
+      document.getElementById('status').textContent = msg;
     }
   </script>
 </body>
